@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+</head>
+<body>
+    <div class="form-container" style="margin-top: 50px;">
+        <form action="" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-field">
+                <input type="email" placeholder="Enter Email" name="emial">
+            </div>
+            <div>
+                <input type="file" name="certificate">
+            </div>
+            <br>
+            <button type="submit" class="form-submit">submit</button> <br>
+            <button type="reset" class="form-submit">clear</button>
+        </form>
+    </div>
+
+</body>
+</html>

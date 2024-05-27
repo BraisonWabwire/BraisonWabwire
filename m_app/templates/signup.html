@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>signup</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+</head>
+<body>
+    <div class="form-container" style="margin-top: 50px;">
+        <h1 class="form-title">Student Form</h1>
+        <form action="" method="post">
+                {% csrf_token %}
+                <div class="form-field">
+                    <input type="text" name="f_name" class="form-input" placeholder="Name">
+                </div>
+                <div class="form-field">
+                    <input type="text" name="l_name" class="form-input" placeholder="Course">
+                </div>
+                <div class="form-field">
+                    <input type="date" name="d_o_b" class="form-field" id="date">
+                </div>
+                <div class="form-field">
+                    <input type="number" name="id_number" class="form-field" placeholder="id number" id="id_number">
+                </div>
+                <div class="form-field">
+                    <input type="text" name="course" class="form-field" placeholder="course">
+                </div>
+                <div class="form-field">
+                    <input type="email" name="email" class="form-field" placeholder="email">
+                </div>
+                <button type="submit" class="form-submit">Submit</button> <br>
+                <button type="reset" class="form-submit">clear</button>
+        </form>
+    </div>
+    
+</body>
+</html>
