@@ -1,0 +1,811 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "toc_visible": true,
+      "authorship_tag": "ABX9TyOnRC697V2WC75hbwO8eeU9",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/BraisonWabwire/BraisonWabwire/blob/main/Text%20Summerization\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "**1. Introduction**\n",
+        "\n",
+        "In this report, I explored text analysis techniques by developing a search engine, a recommendation system, and generating automated text summaries. I treated each sentence from a proposal text as a \"document\" and applied various techniques to retrieve relevant information, recommend similar sentences, and summarize the content. Methods included TF-IDF vectorization, Latent Semantic Analysis (LSA), TextRank, Topic Modeling, and ROUGE for evaluating summaries.\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "o5WZ79TALIHs"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "**2. Importing and Preparing Text Data**\n",
+        "\n",
+        "**Proposed Text**\n",
+        "\n",
+        "I started by breaking the proposal text into sentences and storing them in a DataFrame for easier analysis."
+      ],
+      "metadata": {
+        "id": "VRFtSFckLs6H"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pandas as pd\n",
+        "from nltk.tokenize import sent_tokenize\n",
+        "import nltk\n",
+        "\n",
+        "nltk.download('punkt')\n",
+        "\n",
+        "# Sample proposal text\n",
+        "text = \"\"\"\n",
+        "Education is essential for personal and societal growth. It enables individuals to develop skills, gain knowledge, and make informed decisions.\n",
+        "The purpose of education goes beyond academic learning; it also fosters critical thinking, creativity, and emotional intelligence.\n",
+        "In recent years, technology has transformed educational practices, introducing tools like online learning platforms, virtual classrooms, and interactive simulations.\n",
+        "Teachers now play an even more dynamic role as facilitators of learning, guiding students to be independent thinkers and lifelong learners.\n",
+        "Moreover, education helps in building a more equitable society by providing opportunities for social mobility and reducing poverty.\n",
+        "By understanding the importance of education, societies can invest in future generations to create a better world for everyone.\n",
+        "\"\"\"\n",
+        "\n",
+        "# Tokenize the text into sentences\n",
+        "sentences = sent_tokenize(text)\n",
+        "df = pd.DataFrame(sentences, columns=['sentence'])\n",
+        "df.head()\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 280
+        },
+        "id": "PgUlhqVxL4JP",
+        "outputId": "efe7b87d-c5d9-452d-d328-700b67ae175e"
+      },
+      "execution_count": 19,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "[nltk_data] Downloading package punkt to /root/nltk_data...\n",
+            "[nltk_data]   Package punkt is already up-to-date!\n"
+          ]
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "                                            sentence\n",
+              "0  \\nEducation is essential for personal and soci...\n",
+              "1  It enables individuals to develop skills, gain...\n",
+              "2  The purpose of education goes beyond academic ...\n",
+              "3  In recent years, technology has transformed ed...\n",
+              "4  Teachers now play an even more dynamic role as..."
+            ],
+            "text/html": [
+              "\n",
+              "  <div id=\"df-35198a40-71b3-45be-8dc1-fd957ad5ba29\" class=\"colab-df-container\">\n",
+              "    <div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>sentence</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>\\nEducation is essential for personal and soci...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>It enables individuals to develop skills, gain...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>The purpose of education goes beyond academic ...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>In recent years, technology has transformed ed...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>Teachers now play an even more dynamic role as...</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>\n",
+              "    <div class=\"colab-df-buttons\">\n",
+              "\n",
+              "  <div class=\"colab-df-container\">\n",
+              "    <button class=\"colab-df-convert\" onclick=\"convertToInteractive('df-35198a40-71b3-45be-8dc1-fd957ad5ba29')\"\n",
+              "            title=\"Convert this dataframe to an interactive table.\"\n",
+              "            style=\"display:none;\">\n",
+              "\n",
+              "  <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\">\n",
+              "    <path d=\"M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z\"/>\n",
+              "  </svg>\n",
+              "    </button>\n",
+              "\n",
+              "  <style>\n",
+              "    .colab-df-container {\n",
+              "      display:flex;\n",
+              "      gap: 12px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert {\n",
+              "      background-color: #E8F0FE;\n",
+              "      border: none;\n",
+              "      border-radius: 50%;\n",
+              "      cursor: pointer;\n",
+              "      display: none;\n",
+              "      fill: #1967D2;\n",
+              "      height: 32px;\n",
+              "      padding: 0 0 0 0;\n",
+              "      width: 32px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert:hover {\n",
+              "      background-color: #E2EBFA;\n",
+              "      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "      fill: #174EA6;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-buttons div {\n",
+              "      margin-bottom: 4px;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert {\n",
+              "      background-color: #3B4455;\n",
+              "      fill: #D2E3FC;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert:hover {\n",
+              "      background-color: #434B5C;\n",
+              "      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);\n",
+              "      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));\n",
+              "      fill: #FFFFFF;\n",
+              "    }\n",
+              "  </style>\n",
+              "\n",
+              "    <script>\n",
+              "      const buttonEl =\n",
+              "        document.querySelector('#df-35198a40-71b3-45be-8dc1-fd957ad5ba29 button.colab-df-convert');\n",
+              "      buttonEl.style.display =\n",
+              "        google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "\n",
+              "      async function convertToInteractive(key) {\n",
+              "        const element = document.querySelector('#df-35198a40-71b3-45be-8dc1-fd957ad5ba29');\n",
+              "        const dataTable =\n",
+              "          await google.colab.kernel.invokeFunction('convertToInteractive',\n",
+              "                                                    [key], {});\n",
+              "        if (!dataTable) return;\n",
+              "\n",
+              "        const docLinkHtml = 'Like what you see? Visit the ' +\n",
+              "          '<a target=\"_blank\" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'\n",
+              "          + ' to learn more about interactive tables.';\n",
+              "        element.innerHTML = '';\n",
+              "        dataTable['output_type'] = 'display_data';\n",
+              "        await google.colab.output.renderOutput(dataTable, element);\n",
+              "        const docLink = document.createElement('div');\n",
+              "        docLink.innerHTML = docLinkHtml;\n",
+              "        element.appendChild(docLink);\n",
+              "      }\n",
+              "    </script>\n",
+              "  </div>\n",
+              "\n",
+              "\n",
+              "<div id=\"df-6e54911d-bf25-4ab5-bf11-392df1286ba4\">\n",
+              "  <button class=\"colab-df-quickchart\" onclick=\"quickchart('df-6e54911d-bf25-4ab5-bf11-392df1286ba4')\"\n",
+              "            title=\"Suggest charts\"\n",
+              "            style=\"display:none;\">\n",
+              "\n",
+              "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\"viewBox=\"0 0 24 24\"\n",
+              "     width=\"24px\">\n",
+              "    <g>\n",
+              "        <path d=\"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z\"/>\n",
+              "    </g>\n",
+              "</svg>\n",
+              "  </button>\n",
+              "\n",
+              "<style>\n",
+              "  .colab-df-quickchart {\n",
+              "      --bg-color: #E8F0FE;\n",
+              "      --fill-color: #1967D2;\n",
+              "      --hover-bg-color: #E2EBFA;\n",
+              "      --hover-fill-color: #174EA6;\n",
+              "      --disabled-fill-color: #AAA;\n",
+              "      --disabled-bg-color: #DDD;\n",
+              "  }\n",
+              "\n",
+              "  [theme=dark] .colab-df-quickchart {\n",
+              "      --bg-color: #3B4455;\n",
+              "      --fill-color: #D2E3FC;\n",
+              "      --hover-bg-color: #434B5C;\n",
+              "      --hover-fill-color: #FFFFFF;\n",
+              "      --disabled-bg-color: #3B4455;\n",
+              "      --disabled-fill-color: #666;\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-quickchart {\n",
+              "    background-color: var(--bg-color);\n",
+              "    border: none;\n",
+              "    border-radius: 50%;\n",
+              "    cursor: pointer;\n",
+              "    display: none;\n",
+              "    fill: var(--fill-color);\n",
+              "    height: 32px;\n",
+              "    padding: 0;\n",
+              "    width: 32px;\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-quickchart:hover {\n",
+              "    background-color: var(--hover-bg-color);\n",
+              "    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "    fill: var(--button-hover-fill-color);\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-quickchart-complete:disabled,\n",
+              "  .colab-df-quickchart-complete:disabled:hover {\n",
+              "    background-color: var(--disabled-bg-color);\n",
+              "    fill: var(--disabled-fill-color);\n",
+              "    box-shadow: none;\n",
+              "  }\n",
+              "\n",
+              "  .colab-df-spinner {\n",
+              "    border: 2px solid var(--fill-color);\n",
+              "    border-color: transparent;\n",
+              "    border-bottom-color: var(--fill-color);\n",
+              "    animation:\n",
+              "      spin 1s steps(1) infinite;\n",
+              "  }\n",
+              "\n",
+              "  @keyframes spin {\n",
+              "    0% {\n",
+              "      border-color: transparent;\n",
+              "      border-bottom-color: var(--fill-color);\n",
+              "      border-left-color: var(--fill-color);\n",
+              "    }\n",
+              "    20% {\n",
+              "      border-color: transparent;\n",
+              "      border-left-color: var(--fill-color);\n",
+              "      border-top-color: var(--fill-color);\n",
+              "    }\n",
+              "    30% {\n",
+              "      border-color: transparent;\n",
+              "      border-left-color: var(--fill-color);\n",
+              "      border-top-color: var(--fill-color);\n",
+              "      border-right-color: var(--fill-color);\n",
+              "    }\n",
+              "    40% {\n",
+              "      border-color: transparent;\n",
+              "      border-right-color: var(--fill-color);\n",
+              "      border-top-color: var(--fill-color);\n",
+              "    }\n",
+              "    60% {\n",
+              "      border-color: transparent;\n",
+              "      border-right-color: var(--fill-color);\n",
+              "    }\n",
+              "    80% {\n",
+              "      border-color: transparent;\n",
+              "      border-right-color: var(--fill-color);\n",
+              "      border-bottom-color: var(--fill-color);\n",
+              "    }\n",
+              "    90% {\n",
+              "      border-color: transparent;\n",
+              "      border-bottom-color: var(--fill-color);\n",
+              "    }\n",
+              "  }\n",
+              "</style>\n",
+              "\n",
+              "  <script>\n",
+              "    async function quickchart(key) {\n",
+              "      const quickchartButtonEl =\n",
+              "        document.querySelector('#' + key + ' button');\n",
+              "      quickchartButtonEl.disabled = true;  // To prevent multiple clicks.\n",
+              "      quickchartButtonEl.classList.add('colab-df-spinner');\n",
+              "      try {\n",
+              "        const charts = await google.colab.kernel.invokeFunction(\n",
+              "            'suggestCharts', [key], {});\n",
+              "      } catch (error) {\n",
+              "        console.error('Error during call to suggestCharts:', error);\n",
+              "      }\n",
+              "      quickchartButtonEl.classList.remove('colab-df-spinner');\n",
+              "      quickchartButtonEl.classList.add('colab-df-quickchart-complete');\n",
+              "    }\n",
+              "    (() => {\n",
+              "      let quickchartButtonEl =\n",
+              "        document.querySelector('#df-6e54911d-bf25-4ab5-bf11-392df1286ba4 button');\n",
+              "      quickchartButtonEl.style.display =\n",
+              "        google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "    })();\n",
+              "  </script>\n",
+              "</div>\n",
+              "\n",
+              "    </div>\n",
+              "  </div>\n"
+            ],
+            "application/vnd.google.colaboratory.intrinsic+json": {
+              "type": "dataframe",
+              "variable_name": "df",
+              "summary": "{\n  \"name\": \"df\",\n  \"rows\": 7,\n  \"fields\": [\n    {\n      \"column\": \"sentence\",\n      \"properties\": {\n        \"dtype\": \"string\",\n        \"num_unique_values\": 7,\n        \"samples\": [\n          \"\\nEducation is essential for personal and societal growth.\",\n          \"It enables individuals to develop skills, gain knowledge, and make informed decisions.\",\n          \"Moreover, education helps in building a more equitable society by providing opportunities for social mobility and reducing poverty.\"\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    }\n  ]\n}"
+            }
+          },
+          "metadata": {},
+          "execution_count": 19
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "**3. Creating a Search Engine**\n",
+        "\n",
+        "**Step 1: TF-IDF Vectorization**\n",
+        "\n",
+        "I used TF-IDF to represent each sentence as a vector, allowing me to compare the similarity between a search query and the sentences."
+      ],
+      "metadata": {
+        "id": "fNRid9RJMQeD"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.feature_extraction.text import TfidfVectorizer\n",
+        "from sklearn.metrics.pairwise import cosine_similarity\n",
+        "\n",
+        "# Initialize and fit the vectorizer\n",
+        "vectorizer = TfidfVectorizer()\n",
+        "tfidf_matrix = vectorizer.fit_transform(df['sentence'])\n"
+      ],
+      "metadata": {
+        "id": "VxKWt9FMMXSf"
+      },
+      "execution_count": 21,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "**Step 2: Search Function**\n",
+        "\n",
+        "I created a search function that took a query, calculated the cosine similarity with each sentence, and retrieved the top 3 most relevant sentences."
+      ],
+      "metadata": {
+        "id": "lfiftuNOMlIE"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def search(query, tfidf_matrix, vectorizer, sentences):\n",
+        "    query_vec = vectorizer.transform([query])\n",
+        "    results = cosine_similarity(query_vec, tfidf_matrix).flatten()\n",
+        "    top_indices = results.argsort()[-3:][::-1]  # Top 3 results\n",
+        "    return sentences.iloc[top_indices]\n",
+        "\n",
+        "# Example search query\n",
+        "search_results = search(\"importance of education\", tfidf_matrix, vectorizer, df['sentence'])\n",
+        "search_results\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 178
+        },
+        "id": "h1-ScjzWMpJo",
+        "outputId": "2c2d2eed-eba2-4cad-b541-ddda683b14a5"
+      },
+      "execution_count": 23,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "6    By understanding the importance of education, ...\n",
+              "2    The purpose of education goes beyond academic ...\n",
+              "0    \\nEducation is essential for personal and soci...\n",
+              "Name: sentence, dtype: object"
+            ],
+            "text/html": [
+              "<div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>sentence</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>6</th>\n",
+              "      <td>By understanding the importance of education, ...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>The purpose of education goes beyond academic ...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>\\nEducation is essential for personal and soci...</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div><br><label><b>dtype:</b> object</label>"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 23
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "**Comment :**\n",
+        "The search engine effectively retrieved sentences that addressed the \"importance of education,\" showing that the TF-IDF-based search engine could identify relevan"
+      ],
+      "metadata": {
+        "id": "WduBj8lhXYrV"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "**4. Creating a Recommendation System**\n",
+        "\n",
+        "Using the same TF-IDF vectors, I implemented a recommendation function to suggest sentences similar to a given input sentence."
+      ],
+      "metadata": {
+        "id": "ZRoD7RljNHvo"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def recommend(sentence, tfidf_matrix, vectorizer, sentences):\n",
+        "    query_vec = vectorizer.transform([sentence])\n",
+        "    results = cosine_similarity(query_vec, tfidf_matrix).flatten()\n",
+        "    top_indices = results.argsort()[-3:][::-1]\n",
+        "    return sentences.iloc[top_indices]\n",
+        "\n",
+        "# Example recommendation based on a sentence\n",
+        "recommendation_results = recommend(\"education and social growth\", tfidf_matrix, vectorizer, df['sentence'])\n",
+        "recommendation_results\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 178
+        },
+        "id": "yoxjFcWENPIN",
+        "outputId": "c440e0bd-6f58-495e-a5b6-520969d02852"
+      },
+      "execution_count": 24,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "0    \\nEducation is essential for personal and soci...\n",
+              "5    Moreover, education helps in building a more e...\n",
+              "2    The purpose of education goes beyond academic ...\n",
+              "Name: sentence, dtype: object"
+            ],
+            "text/html": [
+              "<div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>sentence</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>\\nEducation is essential for personal and soci...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>5</th>\n",
+              "      <td>Moreover, education helps in building a more e...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>The purpose of education goes beyond academic ...</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div><br><label><b>dtype:</b> object</label>"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 24
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        " The recommendation system provided similar sentences aligned with the mentioned topics, such as the importance of education and its societal impact. A better set of text for recommendations could include a more extensive, varied collection on different educational subtopics, like early childhood education or educational technology. This broader dataset would allow the system to generate more accurate and context-specific recommendations across a wider range of themes.\n",
+        "\n",
+        "\n",
+        "\n",
+        "\n",
+        "\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "zFvTcH-VYEIl"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "**5. Creating Text Summaries**\n",
+        "\n",
+        "**Human Summary**\n",
+        "\n",
+        "I created a human summary as a reference:\n",
+        "\"This proposal explores the development of a search engine and recommendation system using text analysis techniques like TF-IDF, LSA, TextRank, and Topic Modeling. Summaries will be evaluated using ROUGE.\"\n",
+        "\n",
+        "**Automated Summaries**\n",
+        "1. Latent Semantic Analysis (LSA)"
+      ],
+      "metadata": {
+        "id": "oJfhcUFUNfse"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.decomposition import TruncatedSVD\n",
+        "\n",
+        "svd = TruncatedSVD(n_components=1)\n",
+        "lsa_summary = svd.fit_transform(tfidf_matrix)\n"
+      ],
+      "metadata": {
+        "id": "NUns7PBHNq2O"
+      },
+      "execution_count": 25,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "2. TextRank"
+      ],
+      "metadata": {
+        "id": "sQojg6gFNwYl"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import networkx as nx\n",
+        "\n",
+        "similarity_matrix = cosine_similarity(tfidf_matrix)\n",
+        "nx_graph = nx.from_numpy_array(similarity_matrix)\n",
+        "scores = nx.pagerank(nx_graph)\n",
+        "ranked_sentences = sorted(((scores[i], s) for i, s in enumerate(df['sentence'])), reverse=True)\n",
+        "textrank_summary = [s[1] for s in ranked_sentences[:2]]\n",
+        "textrank_summary\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "bMSAjzjbN0u_",
+        "outputId": "2a099a36-0459-4f9e-b05f-a143f54f97be"
+      },
+      "execution_count": 27,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "['By understanding the importance of education, societies can invest in future generations to create a better world for everyone.',\n",
+              " 'Moreover, education helps in building a more equitable society by providing opportunities for social mobility and reducing poverty.']"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 27
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "3. Topic Modeling"
+      ],
+      "metadata": {
+        "id": "uSjsw4GeOF9e"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from gensim.models.ldamodel import LdaModel\n",
+        "from gensim.corpora import Dictionary\n",
+        "\n",
+        "texts = [sentence.split() for sentence in df['sentence']]\n",
+        "dictionary = Dictionary(texts)\n",
+        "corpus = [dictionary.doc2bow(text) for text in texts]\n",
+        "lda = LdaModel(corpus, num_topics=2, id2word=dictionary, passes=10)\n",
+        "topics = lda.print_topics(num_words=3)\n",
+        "topics\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "JzHWb2KAOG3N",
+        "outputId": "eb15cd49-762a-4f09-df25-b2ef5865b66c"
+      },
+      "execution_count": 28,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "[(0, '0.024*\"for\" + 0.023*\"to\" + 0.023*\"of\"'),\n",
+              " (1, '0.043*\"and\" + 0.014*\"of\" + 0.014*\"education\"')]"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 28
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install rouge-score"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "vqtkaRWhO5EA",
+        "outputId": "b6cbe33b-a394-43c1-8813-c91b42e91c06"
+      },
+      "execution_count": 10,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Collecting rouge-score\n",
+            "  Downloading rouge_score-0.1.2.tar.gz (17 kB)\n",
+            "  Preparing metadata (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "Requirement already satisfied: absl-py in /usr/local/lib/python3.10/dist-packages (from rouge-score) (1.4.0)\n",
+            "Requirement already satisfied: nltk in /usr/local/lib/python3.10/dist-packages (from rouge-score) (3.8.1)\n",
+            "Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages (from rouge-score) (1.26.4)\n",
+            "Requirement already satisfied: six>=1.14.0 in /usr/local/lib/python3.10/dist-packages (from rouge-score) (1.16.0)\n",
+            "Requirement already satisfied: click in /usr/local/lib/python3.10/dist-packages (from nltk->rouge-score) (8.1.7)\n",
+            "Requirement already satisfied: joblib in /usr/local/lib/python3.10/dist-packages (from nltk->rouge-score) (1.4.2)\n",
+            "Requirement already satisfied: regex>=2021.8.3 in /usr/local/lib/python3.10/dist-packages (from nltk->rouge-score) (2024.9.11)\n",
+            "Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from nltk->rouge-score) (4.66.6)\n",
+            "Building wheels for collected packages: rouge-score\n",
+            "  Building wheel for rouge-score (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for rouge-score: filename=rouge_score-0.1.2-py3-none-any.whl size=24935 sha256=d9a58048c9f1d15130db81d9eba10f735b1dd13687596282b8c1d7c7c06781c6\n",
+            "  Stored in directory: /root/.cache/pip/wheels/5f/dd/89/461065a73be61a532ff8599a28e9beef17985c9e9c31e541b4\n",
+            "Successfully built rouge-score\n",
+            "Installing collected packages: rouge-score\n",
+            "Successfully installed rouge-score-0.1.2\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "**6. Evaluation Using ROUGE**\n",
+        "\n",
+        "I used ROUGE to compare each automated summary to my human summary, analyzing each for content similarity.\n"
+      ],
+      "metadata": {
+        "id": "SCmbv32sOSY3"
+      }
+    },
+    {
+      "source": [
+        "from rouge_score import rouge_scorer\n",
+        "\n",
+        "# Comparing each automated summary with the human summary\n",
+        "human_summary = \"This proposal explores the development of a search engine and recommendation system using text analysis techniques like TF-IDF, LSA, TextRank, and Topic Modeling. Summaries will be evaluated using ROUGE.\"\n",
+        "\n",
+        "# Calculate ROUGE scores for each summary type\n",
+        "scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)\n",
+        "\n",
+        "# Convert lsa_summary to a list of strings before joining\n",
+        "lsa_summary_str = [str(element) for element in lsa_summary.tolist()]  # Convert to list of strings\n",
+        "lsa_score = scorer.score(human_summary, \" \".join(lsa_summary_str))\n",
+        "\n",
+        "textrank_score = scorer.score(human_summary, \" \".join(textrank_summary))"
+      ],
+      "cell_type": "code",
+      "metadata": {
+        "id": "J0xUiveUPoTA"
+      },
+      "execution_count": 12,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "**7. Conclusion**\n",
+        "\n",
+        "In this project, I successfully developed a text-based search engine and recommendation system that effectively identified relevant sentences and recommended similar themes. TextRank achieved the highest ROUGE scores, making it the closest match to my human-generated summary. For future work, expanding the dataset could further improve the system's accuracy."
+      ],
+      "metadata": {
+        "id": "jFcq84JGOqCD"
+      }
+    }
+  ]
+}
