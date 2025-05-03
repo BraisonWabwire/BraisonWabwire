@@ -5,6 +5,7 @@
 - 📫 How to reach me through email: braisonwabwire2003@gmail.com or phone: +25418923326
 - 😄 Pronouns: ...
 - ⚡ Fun fact: I love basketball
+- My portfolio https://myportfolio-bay-seven-37.vercel.app/
 
 <!---
 BraisonWabwire/BraisonWabwire is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
