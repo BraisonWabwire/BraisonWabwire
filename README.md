@@ -130,19 +130,20 @@ Started exploring practical cybersecurity through introductory security labs.
 
 ---
 
+
 ## GitHub Activity
 
 <div align="center">
 
-![GitHub Profile Summary](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=YOUR_GITHUB_USERNAME&theme=github_dark)
+![GitHub Profile Summary](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=BraisonWabwire&theme=github_dark)
 
-![GitHub Languages](https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=YOUR_GITHUB_USERNAME&theme=github_dark)
+![GitHub Languages](https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=BraisonWabwire&theme=github_dark)
 
-![GitHub Stats](https://github-profile-summary-cards.vercel.app/api/cards/stats?username=YOUR_GITHUB_USERNAME&theme=github_dark)
+![GitHub Stats](https://github-profile-summary-cards.vercel.app/api/cards/stats?username=BraisonWabwire&theme=github_dark)
 
 </div>
 
-> Replace `YOUR_GITHUB_USERNAME` with your actual GitHub username to display your statistics.
+>
 
 ---
 
